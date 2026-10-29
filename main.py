@@ -280,8 +280,20 @@ def web(host, port, shop):
 
 
 # ──────────────────────────────────────────────
+# tray (Windows System Tray Shop Connector)
+# ──────────────────────────────────────────────
+
+@cli.command()
+def tray():
+    """Start the Windows System Tray Shop Connector application."""
+    from printer_agent.tray_app import main as tray_main
+    tray_main()
+
+
+# ──────────────────────────────────────────────
 # Entry-point
 # ──────────────────────────────────────────────
 
 if __name__ == "__main__":
     cli()
+

@@ -228,20 +228,28 @@
           The Shop Agent is a lightweight background service that receives incoming customer print jobs and feeds them to your connected printer.
         </p>
 
-        <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
-          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--accent);">Option A: Download Ready-to-Run Launcher (Fastest)</h4>
-          <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-muted);">
-            Click the button below to download your pre-configured batch launcher. Save it to your Desktop and double-click to run!
+        <div style="background: var(--bg-primary); border: 1px solid rgba(37, 99, 235, 0.4); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <h4 style="margin: 0; font-size: 1.15rem; color: var(--accent);">⭐ Option 1: Standalone Windows App (PrinterAgent.exe - Recommended)</h4>
+            <span style="background: rgba(37, 99, 235, 0.15); color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">Zero Setup / Silent Tray</span>
+          </div>
+          <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+            A clean, standalone Windows application that lives right in your system tray (near the clock). No command prompt windows, silent background printing, and instant Windows desktop toast notifications!
           </p>
-          <a href="/api/agent/download-launcher?shop={{ shop.shop_id }}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
-            ⬇️ Download <code>start_{{ shop.shop_id }}_agent.bat</code>
-          </a>
+          <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <a href="/api/agent/download-launcher?shop={{ shop.shop_id }}" class="btn btn-primary" style="padding: 0.65rem 1.25rem;">
+              ⬇️ Download Windows Launcher (<code>start_{{ shop.shop_id }}_agent.bat</code>)
+            </a>
+          </div>
+          <p style="margin: 0.75rem 0 0 0; font-size: 0.82rem; color: var(--text-secondary);">
+            💡 To compile the full standalone <code>PrinterAgent.exe</code> binary for this shop, simply run <code>build_tray_app.bat</code> in the project folder.
+          </p>
         </div>
 
         <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;">
-          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary);">Option B: If you already have this project folder on your PC</h4>
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary);">Option 2: Direct Command Line / Python Launcher</h4>
           <p style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: var(--text-muted);">
-            Simply double-click <strong><code>run_shop_agent.bat</code></strong> inside this project folder, or run this command in terminal:
+            Double-click <strong><code>run_shop_agent.bat</code></strong> inside this project folder, or run this command in terminal:
           </p>
           <div class="instruction-box">
             <span>python -m printer_agent.shop_client --server "{{ server_url }}" --shop "{{ shop.shop_id }}" --key "{{ shop.api_key }}"</span>

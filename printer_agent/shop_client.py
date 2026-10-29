@@ -126,6 +126,10 @@ class ShopPrinterClient:
         printer_name: str = "",
         auto_print: bool = True,
         poll_interval: float = 3.0,
+        on_order_received=None,
+        on_order_completed=None,
+        on_order_failed=None,
+        on_heartbeat=None,
     ):
         self.server_url = server_url.rstrip("/")
         self.shop_id = shop_id
@@ -134,6 +138,18 @@ class ShopPrinterClient:
         self.auto_print = auto_print
         self.poll_interval = poll_interval
         self._last_heartbeat = 0.0
+        self.running = False
+        self.jobs_count = 0
+        self.connected = False
+
+        self.on_order_received = on_order_received
+        self.on_order_completed = on_order_completed
+        self.on_order_failed = on_order_failed
+        self.on_heartbeat = on_heartbeat
+
+    def stop(self):
+        """Stop the client loop."""
+        self.running = False
 
     def print_test_page(self) -> bool:
         """Send immediate test page to physical printer."""
@@ -172,9 +188,16 @@ class ShopPrinterClient:
             res = requests.post(url, json=payload, timeout=5)
             if res.ok:
                 self._last_heartbeat = time.time()
+                self.connected = True
+                if self.on_heartbeat:
+                    self.on_heartbeat(True)
                 return True
         except Exception as exc:
             logger.debug("Heartbeat failed: %s", exc)
+
+        self.connected = False
+        if self.on_heartbeat:
+            self.on_heartbeat(False)
         return False
 
     def fetch_and_process_jobs(self):
@@ -198,6 +221,11 @@ class ShopPrinterClient:
         copies = int(order.get("copies", 1))
 
         print(f"\n🔔 NEW PRINT ORDER RECEIVED: {order_id} ({filename}, {copies} copies)")
+        if self.on_order_received:
+            try:
+                self.on_order_received(order)
+            except Exception:
+                pass
 
         # Download file
         download_url = f"{self.server_url}/api/agent/download-file/{order_id}?shop_id={self.shop_id}&api_key={self.api_key}"
@@ -215,13 +243,24 @@ class ShopPrinterClient:
 
             print_file(temp_dest, printer_name=self.printer_name, copies=copies)
             print("   ✅ Print completed successfully!")
+            self.jobs_count += 1
 
             # Notify server completed
             self._report_status(order_id, "completed")
+            if self.on_order_completed:
+                try:
+                    self.on_order_completed(order)
+                except Exception:
+                    pass
         except Exception as exc:
             err = str(exc)
             print(f"   ❌ Print failed: {err}")
             self._report_status(order_id, "failed", error_msg=err)
+            if self.on_order_failed:
+                try:
+                    self.on_order_failed(order, err)
+                except Exception:
+                    pass
         finally:
             try:
                 temp_dest.unlink()
@@ -245,6 +284,7 @@ class ShopPrinterClient:
 
     def run(self):
         """Main client loop."""
+        self.running = True
         print("=" * 65)
         print("   🖨️  PRINTER AGENT - LOCAL SHOP CONNECTOR")
         print("=" * 65)
@@ -274,7 +314,7 @@ class ShopPrinterClient:
         print("👂 Listening for incoming customer print jobs... (Press Ctrl+C to stop)\n")
 
         try:
-            while True:
+            while self.running:
                 # 1. Heartbeat every 15 seconds
                 if time.time() - self._last_heartbeat > 15:
                     self.send_heartbeat()
@@ -286,6 +326,8 @@ class ShopPrinterClient:
                 time.sleep(self.poll_interval)
         except KeyboardInterrupt:
             print("\n🛑 Shop agent stopped.")
+        finally:
+            self.running = False
 
 
 def main():

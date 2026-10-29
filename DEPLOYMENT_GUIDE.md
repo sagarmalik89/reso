@@ -80,16 +80,38 @@ http://your-server-ip:8000/setup-guide?shop=malik-cafe
 
 #### 2. Installing the Shop Agent on the Shop PC
 The shopkeeper needs to run the lightweight Shop Agent on the PC connected to the printer:
-- **Option A (1-Click Download)**: On their Setup Guide, they click **"⬇️ Download Launcher"** which downloads `start_malik-cafe_agent.bat` pre-configured with their Shop ID and API key. They double-click it on their PC.
-- **Option B (Batch Menu)**: Double-click **`run_shop_agent.bat`** in the project folder and choose `[1] Start Live Print Agent`.
+- **Option A (Standalone System Tray .exe - Recommended)**:
+  Run `build_tray_app.bat` to compile `release/PrinterAgent.exe`. Give the shopkeeper the `release/` folder. They edit their shop ID in `shop_config.json` and double-click `PrinterAgent.exe`. It runs silently in their Windows taskbar tray with desktop notifications and 1-click test printing!
+- **Option B (1-Click Download)**: On their Setup Guide, they click **"⬇️ Download Launcher"** which downloads `start_malik-cafe_agent.bat` pre-configured with their Shop ID and API key.
+- **Option C (Batch Menu)**: Double-click **`run_shop_agent.bat`** in the project folder and choose `[1] Start Live Print Agent`.
 
 #### 3. Live Status & Hardware Test Print
 - As soon as the agent starts, the server updates the shop's status to **🟢 Printer Online & Ready**.
-- In the dashboard, click **"🖨️ Send Test Print"** to verify that paper feeds and ink prints correctly.
+- In the dashboard or system tray menu, click **"🖨️ Send Test Print"** to verify that paper feeds and ink prints correctly.
 
 #### 4. Place Counter QR Flyer
 - Print the flyer from `http://your-server-ip:8000/qr?shop=malik-cafe`.
 - Place the laminated flyer on the shop desk. Customers scan and print!
+
+---
+
+### 🖥️ Windows System Tray Executable (.exe)
+
+For non-technical shopkeepers who do not want command prompt windows on their screens:
+
+```text
+build_tray_app.bat   -->   Compiles release\PrinterAgent.exe
+```
+
+1. Run **`build_tray_app.bat`** (or `python build_exe.py`).
+2. The compilation produces a single portable **`release\PrinterAgent.exe`** with:
+   - Modern Windows System Tray icon with live connection indicator (🟢 Online / 🔴 Offline).
+   - Windows Desktop Balloon / Toast notifications on incoming orders and completed prints.
+   - Right-click tray menu with 1-click **Hardware Test Print**, **Open Dashboard**, **Open Counter Flyer**, and **Edit Configuration**.
+   - No black console window (`--noconsole`).
+3. To start automatically on Windows boot:
+   - Press `Win + R`, type `shell:startup`, and drop a shortcut to `PrinterAgent.exe`.
+
 
 ---
 
