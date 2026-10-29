@@ -30,10 +30,17 @@ import signal
 import sys
 import time
 
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+# pyrefly: ignore[missing-import]
 import click
 from tabulate import tabulate
 
-from printer_agent.config import LOGS_DIR, WATCH_FOLDER
+from printer_agent.config import LOGS_DIR, WATCH_FOLDER, WEB_HOST, WEB_PORT
 from printer_agent.folder_watcher import folder_watcher
 from printer_agent.logger import get_logger
 from printer_agent.print_engine import get_default_printer, list_printers, print_file
@@ -234,6 +241,41 @@ def dashboard():
         click.echo("\n🛑 Stopping agent …")
         print_scheduler.stop()
         folder_watcher.stop()
+        queue_manager.stop()
+
+
+# ──────────────────────────────────────────────
+# web (Customer QR Portal & Operator Dashboard)
+# ──────────────────────────────────────────────
+
+@cli.command()
+@click.option("--host", default=WEB_HOST, help="Host interface to bind (default: 0.0.0.0)")
+@click.option("--port", "-p", default=WEB_PORT, help="Port to listen on (default: 8000)")
+@click.option("--shop", default="counter-1", help="Shop or counter ID")
+def web(host, port, shop):
+    """Start the web server for customer QR scan & operator dashboard."""
+    import uvicorn
+    from printer_agent.web.utils import get_local_ip, get_upload_url
+
+    local_ip = get_local_ip()
+    upload_url = get_upload_url(local_ip, port, shop)
+
+    click.echo("=" * 65)
+    click.echo("  🌐 PRINTER AGENT WEB PORTAL STARTED")
+    click.echo("=" * 65)
+    click.echo(f"  Operator Dashboard : http://localhost:{port}")
+    click.echo(f"  Customer Upload URL: {upload_url}")
+    click.echo(f"  Print Counter Flyer: http://localhost:{port}/qr?shop={shop}")
+    click.echo(f"  Admin Login Email  : admin@printagent.com (password: admin123)")
+    click.echo("=" * 65)
+    click.echo("  Press Ctrl+C to stop.\n")
+
+    # Start queue manager worker
+    queue_manager.start()
+
+    try:
+        uvicorn.run("printer_agent.web.app:app", host=host, port=port, reload=False, log_level="info")
+    finally:
         queue_manager.stop()
 
 

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QuickPrint – Scan & Upload</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    body {
+      background: linear-gradient(180deg, #0F172A 0%, #1E293B 100%);
+      padding-bottom: 2rem;
+    }
+    .header-logo {
+      text-align: center;
+      margin: 1.5rem 0 0.5rem;
+    }
+    .header-logo span {
+      font-size: 2.8rem;
+    }
+    .counter-pill {
+      display: inline-block;
+      background: rgba(59, 130, 246, 0.2);
+      color: var(--accent);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .stepper button {
+      width: 42px;
+      height: 42px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      border-radius: 8px;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      cursor: pointer;
+    }
+    .stepper input {
+      text-align: center;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+    .file-preview {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid var(--success);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      text-align: left;
+    }
+    .success-screen {
+      display: none;
+      text-align: center;
+      padding: 2rem 1rem;
+    }
+    .success-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      animation: bounce 1s ease infinite alternate;
+    }
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-8px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header-logo">
+    <span>🖨️</span>
+    <h1 style="font-size: 1.5rem; font-weight: 700; margin-top: 0.25rem;">QuickPrint Counter</h1>
+    <span class="counter-pill">{{ shop_id }}</span>
+    <p style="color: var(--text-muted); font-size: 0.85rem;">
+      Upload directly to the counter printer • No WhatsApp needed!
+    </p>
+  </div>
+
+  <div class="upload-wrapper">
+    <!-- Form Card -->
+    <div id="upload-form-card" class="upload-card">
+      <form id="upload-form">
+        <input type="hidden" name="shop_id" value="{{ shop_id }}">
+        <!-- File Dropzone -->
+        <div class="form-group">
+          <label class="form-label">Select Document / Photo *</label>
+          <div class="file-dropzone" onclick="document.getElementById('file-input').click()">
+            <div style="font-size: 2.2rem; margin-bottom: 0.25rem;">📄 📸</div>
+            <div style="font-weight: 600; font-size: 1rem; color: var(--accent);">
+              Tap to choose file or snap photo
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">
+              PDF, Word, TXT, or Photos (JPG, PNG)
+            </div>
+            <input type="file" id="file-input" name="file" required>
+          </div>
+
+          <div id="file-preview" class="file-preview">
+            <span style="font-size: 1.5rem;">✅</span>
+            <div style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+              <div id="preview-filename" style="font-weight: 600; font-size: 0.95rem;"></div>
+              <div style="display: flex; gap: 0.5rem; align-items: center; margin-top: 0.2rem;">
+                <span id="preview-filesize" style="font-size: 0.8rem; color: var(--text-muted);"></span>
+                <span id="preview-pages" style="display: none; font-size: 0.75rem; background: rgba(59, 130, 246, 0.15); color: var(--accent); padding: 1px 6px; border-radius: 4px; font-weight: 600;"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Name -->
+        <div class="form-group">
+          <label class="form-label" for="customer_name">Your Name *</label>
+          <input class="form-input" type="text" id="customer_name" name="customer_name" placeholder="e.g. Rahul Sharma" required>
+        </div>
+
+        <!-- Phone Number -->
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone / WhatsApp (Optional)</label>
+          <input class="form-input" type="tel" id="phone" name="phone" placeholder="e.g. 9876543210">
+        </div>
+
+        <!-- Number of Copies & Color -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label">Number of Copies</label>
+            <div class="stepper">
+              <button type="button" onclick="decrementCopies()">-</button>
+              <input type="number" id="copies" name="copies" class="form-input" value="1" min="1" max="99" readonly>
+              <button type="button" onclick="incrementCopies()">+</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Print Mode</label>
+            <select class="form-select" id="color_mode" name="color_mode" style="height: 42px;">
+              <option value="bw">Black & White</option>
+              <option value="color">Color Print</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Pages to Print (Optional) -->
+        <div class="form-group">
+          <label class="form-label" for="page_range">Pages to Print (Optional)</label>
+          <input class="form-input" type="text" id="page_range" name="page_range" placeholder="e.g. 1-3, 5 (leave blank for All Pages)">
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Leave blank to print entire file. Use commas &amp; hyphens (e.g. <code>1-5, 8</code>).
+          </div>
+        </div>
+
+        <!-- Notes / Special Instructions -->
+        <div class="form-group">
+          <label class="form-label" for="notes">Special Instructions (Optional)</label>
+          <textarea class="form-textarea" id="notes" name="notes" rows="2" placeholder="e.g. Double-sided, stapled, etc."></textarea>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; padding: 0.9rem; font-size: 1.05rem; margin-top: 0.5rem;">
+          🚀 Send to Printer Agent
+        </button>
+      </form>
+    </div>
+
+    <!-- Success Screen with UPI Payment -->
+    <div id="success-card" class="upload-card success-screen">
+      <div class="success-icon">🎉</div>
+      <h2 style="font-size: 1.4rem; font-weight: 700; margin-bottom: 0.25rem;">
+        Document Received!
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
+        Your document has been sent directly to the counter operator.
+      </p>
+
+      <!-- Token & Document Summary -->
+      <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.15rem; margin-bottom: 1.25rem; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: baseline;">
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Order Token</div>
+          <div id="success-amount-badge" style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981; font-weight: 700; font-size: 0.95rem; padding: 2px 8px; border-radius: 6px;">₹0.00</div>
+        </div>
+        <div id="success-order-id" style="font-size: 1.8rem; font-weight: 800; color: var(--accent); margin: 0.2rem 0;">—</div>
+        <div id="success-doc-summary" style="font-size: 0.85rem; color: var(--text-main); font-weight: 500; margin-top: 0.4rem;"></div>
+      </div>
+
+      <!-- Live UPI Payment Box -->
+      <div id="upi-payment-box" style="background: rgba(15, 23, 42, 0.65); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.25rem; text-align: center;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; font-weight: 700; font-size: 0.95rem; color: #f8fafc; margin-bottom: 0.35rem;">
+          <span>⚡ Instant UPI Payment</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Scan with any UPI app (GPay, PhonePe, Paytm, BHIM, Cred)
+        </div>
+
+        <div style="background: #fff; padding: 8px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.25); margin-bottom: 0.75rem;">
+          <img id="upi-qr-image" src="" alt="UPI Payment QR Code" style="width: 170px; height: 170px; display: block;">
+        </div>
+
+        <div id="upi-vpa-label" style="font-family: monospace; font-size: 0.8rem; color: var(--accent); margin-bottom: 0.85rem;"></div>
+
+        <!-- 1-Click Pay on Mobile -->
+        <a id="upi-mobile-pay-btn" href="#" class="btn btn-success" style="display: flex; align-items: center; justify-content: center; gap: 0.45rem; width: 100%; padding: 0.75rem; text-decoration: none; font-weight: 600; margin-bottom: 0.75rem;">
+          📱 Tap to Pay via UPI App
+        </a>
+
+        <!-- UTR / Ref Number Confirmation -->
+        <div id="utr-section" style="margin-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem; text-align: left;">
+          <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.35rem;">
+            Paid? Enter UPI Ref / UTR No. (Optional):
+          </label>
+          <div style="display: flex; gap: 0.4rem;">
+            <input type="text" id="utr-input" placeholder="e.g. 423819283719" class="form-input" style="padding: 0.45rem 0.65rem; font-size: 0.85rem; flex: 1;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="submitUtrRef()" id="utr-submit-btn" style="white-space: nowrap;">
+              ✓ Confirm
+            </button>
+          </div>
+          <div id="utr-success-msg" style="display: none; color: #10b981; font-size: 0.8rem; font-weight: 600; margin-top: 0.4rem; text-align: center;">
+            ✅ Payment reference recorded! Show token at counter.
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-secondary" onclick="resetForm()" style="width: 100%;">
+        ➕ Upload Another Document
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("file-input");
+    const filePreview = document.getElementById("file-preview");
+    const previewFilename = document.getElementById("preview-filename");
+    const previewFilesize = document.getElementById("preview-filesize");
+    const previewPages = document.getElementById("preview-pages");
+    const copiesInput = document.getElementById("copies");
+    const colorModeSelect = document.getElementById("color_mode");
+    const pageRangeInput = document.getElementById("page_range");
+    const uploadForm = document.getElementById("upload-form");
+    const submitBtn = document.getElementById("submit-btn");
+
+    let detectedPages = 1;
+    let currentUploadedOrderId = null;
+
+    // Fast client-side PDF page counter (offline scanner)
+    function scanPdfPagesClient(file) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function () {
+          try {
+            const text = new TextDecoder("latin1").decode(reader.result);
+            const countMatches = [...text.matchAll(/\/Type\s*\/Pages[^>]*\/Count\s+(\d+)/g)];
+            if (countMatches.length > 0) {
+              const counts = countMatches.map((m) => parseInt(m[1], 10)).filter((n) => !isNaN(n));
+              if (counts.length > 0) {
+                resolve(Math.max(...counts));
+                return;
+              }
+            }
+            const pageMatches = text.match(/\/Type\s*\/Page\b/g);
+            if (pageMatches) {
+              resolve(pageMatches.length);
+              return;
+            }
+          } catch (e) {}
+          resolve(1);
+        };
+        reader.onerror = () => resolve(1);
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        previewFilename.innerText = file.name;
+        previewFilesize.innerText = (file.size / 1024).toFixed(1) + " KB";
+        filePreview.style.display = "flex";
+
+        const ext = file.name.split(".").pop().toLowerCase();
+        if (ext === "pdf") {
+          detectedPages = await scanPdfPagesClient(file);
+          if (previewPages) {
+            previewPages.innerText = `📄 ${detectedPages} page${detectedPages > 1 ? "s" : ""}`;
+            previewPages.style.display = "inline-block";
+          }
+        } else {
+          detectedPages = 1;
+          if (previewPages) previewPages.style.display = "none";
+        }
+      } else {
+        filePreview.style.display = "none";
+        if (previewPages) previewPages.style.display = "none";
+      }
+    });
+
+    function incrementCopies() {
+      let val = parseInt(copiesInput.value) || 1;
+      if (val < 99) copiesInput.value = val + 1;
+    }
+
+    function decrementCopies() {
+      let val = parseInt(copiesInput.value) || 1;
+      if (val > 1) copiesInput.value = val - 1;
+    }
+
+    uploadForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Please select a document or photo to upload.");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerText = "⏳ Uploading & Notifying Agent...";
+
+      const formData = new FormData(uploadForm);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || "Upload failed");
+        }
+
+        currentUploadedOrderId = data.order_id;
+        document.getElementById("success-order-id").innerText = data.order_id;
+        const pgs = data.page_count || detectedPages || 1;
+        const cps = data.copies || 1;
+        const mode = data.color_mode === "color" ? "Color" : "B&W";
+        const rangeText = data.page_range ? ` (pages: ${data.page_range})` : "";
+        document.getElementById("success-doc-summary").innerText = `📄 ${pgs} page${pgs > 1 ? "s" : ""}${rangeText} • ${cps} cop${cps > 1 ? "ies" : "y"} • ${mode} print`;
+        
+        const totalAmt = (data.total_amount || 0).toFixed(2);
+        document.getElementById("success-amount-badge").innerText = `₹${totalAmt}`;
+
+        // Load UPI payment details
+        try {
+          const payRes = await fetch(`/api/orders/${data.order_id}/payment`);
+          if (payRes.ok) {
+            const payInfo = await payRes.json();
+            document.getElementById("upi-qr-image").src = `/api/orders/${data.order_id}/upi-qr.png?_t=${Date.now()}`;
+            document.getElementById("upi-vpa-label").innerText = `UPI: ${payInfo.vpa}`;
+            document.getElementById("upi-mobile-pay-btn").href = payInfo.upi_uri;
+          }
+        } catch (payErr) {
+          console.warn("Could not load UPI details", payErr);
+        }
+
+        document.getElementById("upload-form-card").style.display = "none";
+        document.getElementById("success-card").style.display = "block";
+      } catch (err) {
+        alert("Upload error: " + err.message);
+        submitBtn.disabled = false;
+        submitBtn.innerText = "🚀 Send to Printer Agent";
+      }
+    });
+
+    async function submitUtrRef() {
+      if (!currentUploadedOrderId) return;
+      const utrInput = document.getElementById("utr-input");
+      const utrBtn = document.getElementById("utr-submit-btn");
+      const utrMsg = document.getElementById("utr-success-msg");
+      const utrVal = utrInput.value.trim();
+      if (!utrVal) {
+        alert("Please enter your UPI transaction / reference number.");
+        return;
+      }
+      utrBtn.disabled = true;
+      utrBtn.innerText = "⏳...";
+      try {
+        const fd = new FormData();
+        fd.append("utr", utrVal);
+        const res = await fetch(`/api/orders/${currentUploadedOrderId}/submit-utr`, { method: "POST", body: fd });
+        if (res.ok) {
+          utrMsg.style.display = "block";
+          utrInput.disabled = true;
+          utrBtn.style.display = "none";
+        } else {
+          alert("Could not record payment reference.");
+          utrBtn.disabled = false;
+          utrBtn.innerText = "✓ Confirm";
+        }
+      } catch (err) {
+        alert("Error: " + err.message);
+        utrBtn.disabled = false;
+        utrBtn.innerText = "✓ Confirm";
+      }
+    }
+
+    function resetForm() {
+      uploadForm.reset();
+      filePreview.style.display = "none";
+      if (previewPages) previewPages.style.display = "none";
+      detectedPages = 1;
+      currentUploadedOrderId = null;
+      document.getElementById("utr-input").value = "";
+      document.getElementById("utr-input").disabled = false;
+      document.getElementById("utr-submit-btn").style.display = "inline-block";
+      document.getElementById("utr-submit-btn").disabled = false;
+      document.getElementById("utr-submit-btn").innerText = "✓ Confirm";
+      document.getElementById("utr-success-msg").style.display = "none";
+      submitBtn.disabled = false;
+      submitBtn.innerText = "🚀 Send to Printer Agent";
+      document.getElementById("success-card").style.display = "none";
+      document.getElementById("upload-form-card").style.display = "block";
+    }
+  </script>
+</body>
+</html>

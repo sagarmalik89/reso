@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up Your Shop – Printer Agent</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    .signup-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+    }
+    .signup-container {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      max-width: 960px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .signup-hero {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15));
+      border-right: 1px solid var(--border);
+      padding: 3rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hero-features {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .feature-item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+    }
+    .feature-icon {
+      font-size: 1.5rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+      flex-shrink: 0;
+    }
+    .feature-text h4 {
+      margin: 0 0 0.25rem 0;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+    .feature-text p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .signup-form-pane {
+      padding: 3rem 2.5rem;
+    }
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 768px) {
+      .signup-container {
+        grid-template-columns: 1fr;
+      }
+      .signup-hero {
+        display: none;
+      }
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-wrapper">
+    <div class="signup-container">
+      
+      <!-- Left Hero Banner -->
+      <div class="signup-hero">
+        <div>
+          <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🖨️</div>
+          <h2 style="font-size: 1.75rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem;">
+            Grow Your Print Shop & Cyber Cafe
+          </h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">
+            Stop asking customers to WhatsApp files. Get a QR flyer, connect your printer, and print instantly.
+          </p>
+
+          <div class="hero-features">
+            <div class="feature-item">
+              <div class="feature-icon">📲</div>
+              <div class="feature-text">
+                <h4>Customer Scan-to-Print</h4>
+                <p>Customers scan the counter QR with any phone and upload PDF, photos, Word docs.</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon">⚡</div>
+              <div class="feature-text">
+                <h4>Direct USB / Wi-Fi Printing</h4>
+                <p>Works with your existing HP, Canon, Epson, or Brother printer without extra drivers.</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon">🔔</div>
+              <div class="feature-text">
+                <h4>Live Audio Alert</h4>
+                <p>Instant chime rings on your computer the moment a customer submits documents.</p>
+              </div>
+            </div>
+
+            <div class="feature-item">
+              <div class="feature-icon">💼</div>
+              <div class="feature-text">
+                <h4>Multi-Counter & Analytics</h4>
+                <p>Manage multiple operators, track pages printed, and view complete daily logs.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 0.85rem; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 1.25rem;">
+          Already have an account? <a href="/login" style="color: var(--accent); font-weight: 600; text-decoration: none;">Sign in here</a>
+        </div>
+      </div>
+
+      <!-- Right Registration Form -->
+      <div class="signup-form-pane">
+        <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">Register Your Shop</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.75rem;">
+          Start your 14-day free trial. No credit card required.
+        </p>
+
+        {% if error %}
+        <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: var(--danger); padding: 0.75rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1.5rem;">
+          ⚠️ {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/signup" method="POST">
+          <div class="form-group">
+            <label class="form-label" for="shop_name">Shop / Business Name *</label>
+            <input class="form-input" type="text" id="shop_name" name="shop_name" placeholder="e.g. Malik Graphics & Cyber Cafe" required autofocus>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="owner_name">Owner / Manager Name *</label>
+              <input class="form-input" type="text" id="owner_name" name="owner_name" placeholder="e.g. Sagar Malik" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="phone">Mobile / WhatsApp No. *</label>
+              <input class="form-input" type="tel" id="phone" name="phone" placeholder="e.g. 9876543210" required>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="email">Email Address *</label>
+              <input class="form-input" type="email" id="email" name="email" placeholder="shop@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="city">City / Market Location</label>
+              <input class="form-input" type="text" id="city" name="city" placeholder="e.g. Delhi / Sector 18">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="custom_slug">Custom Counter Slug (Optional)</label>
+            <input class="form-input" type="text" id="custom_slug" name="custom_slug" placeholder="e.g. malik-print (used in your QR link)">
+            <small style="color: var(--text-muted); font-size: 0.75rem;">Leave empty to auto-generate from shop name.</small>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="password">Create Password *</label>
+              <input class="form-input" type="password" id="password" name="password" placeholder="At least 6 characters" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="confirm_password">Confirm Password *</label>
+              <input class="form-input" type="password" id="confirm_password" name="confirm_password" placeholder="Repeat password" required minlength="6">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.85rem; font-size: 1rem;">
+            🚀 Register & Setup My Printer
+          </button>
+        </form>
+
+        <div style="margin-top: 1.5rem; text-align: center; font-size: 0.85rem; color: var(--text-muted);">
+          Already signed up? <a href="/login" style="color: var(--accent); text-decoration: none; font-weight: 600;">Sign in to your dashboard</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>

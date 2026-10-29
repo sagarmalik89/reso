@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Counter QR Flyer – {{ shop_id | upper }}</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    body {
+      background-color: #f1f5f9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .flyer {
+      background: #ffffff;
+      border: 3px solid #0f172a;
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      max-width: 520px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .flyer-badge {
+      display: inline-block;
+      background: #3b82f6;
+      color: #ffffff;
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .flyer-title {
+      font-size: 2.2rem;
+      font-weight: 900;
+      color: #0f172a;
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .flyer-subtitle {
+      font-size: 1.1rem;
+      color: #64748b;
+      margin-bottom: 2rem;
+    }
+    .qr-container {
+      background: #f8fafc;
+      border: 2px dashed #94a3b8;
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: inline-block;
+      margin-bottom: 2rem;
+    }
+    .qr-container img {
+      width: 260px;
+      height: 260px;
+      display: block;
+    }
+    .steps {
+      display: flex;
+      justify-content: space-between;
+      text-align: left;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      border-top: 1px solid #e2e8f0;
+      padding-top: 1.5rem;
+    }
+    .step {
+      flex: 1;
+    }
+    .step-num {
+      width: 28px;
+      height: 28px;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+    .step-text {
+      font-size: 0.85rem;
+      color: #334155;
+      font-weight: 600;
+    }
+    .url-hint {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      word-break: break-all;
+    }
+    .print-bar {
+      margin-top: 1.5rem;
+    }
+    .btn-print {
+      background: #0f172a;
+      color: #ffffff;
+      border: none;
+      padding: 0.8rem 1.75rem;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    @media print {
+      body {
+        background: transparent;
+        padding: 0;
+      }
+      .flyer {
+        border: 2px solid #000;
+        box-shadow: none;
+        max-width: 100%;
+        width: 100%;
+      }
+      .print-bar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="flyer">
+    <div class="flyer-badge">⚡ Quick Print Counter</div>
+    <h1 class="flyer-title">SCAN & PRINT</h1>
+    <p class="flyer-subtitle">No WhatsApp Needed • Direct to Printer</p>
+
+    <div class="qr-container">
+      <img src="/api/qr.png?shop={{ shop_id }}" alt="Scan QR Code to Upload">
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">Scan with phone camera</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">Pick doc or photo</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">Collect prints!</div>
+      </div>
+    </div>
+
+    <div class="url-hint">
+      Counter link: <strong>{{ upload_url }}</strong>
+    </div>
+  </div>
+
+  <div class="print-bar">
+    <button class="btn-print" onclick="window.print()">🖨️ Print this Counter Flyer</button>
+  </div>
+</body>
+</html>

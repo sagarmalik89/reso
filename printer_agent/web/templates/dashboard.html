@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operator Dashboard – Printer Agent</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    .revenue-card { border-color: rgba(16, 185, 129, 0.4); }
+    .revenue-val  { color: #10b981; font-size: 1.6rem; font-weight: 800; }
+    .pay-badge-paid   { background:rgba(16,185,129,.15); color:#10b981; border:1px solid rgba(16,185,129,.4); border-radius:6px; padding:2px 8px; font-size:.75rem; font-weight:700; }
+    .pay-badge-unpaid { background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.4); border-radius:6px; padding:2px 8px; font-size:.75rem; font-weight:700; }
+    .amount-cell  { font-weight:700; color:var(--text-main); font-size:.95rem; }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="/?shop={{ shop_id }}" class="brand">
+      <span>🖨️ Printer Agent</span>
+      <span class="brand-badge">{{ shop_name or (shop_id | upper) }}</span>
+    </a>
+    <div class="nav-actions">
+      {% if is_admin %}
+      <a href="/admin/shops" class="btn btn-secondary btn-sm" style="border-color: var(--warning); color: var(--warning);">
+        🏪 All Shops Admin
+      </a>
+      {% endif %}
+      <a href="/setup-guide?shop={{ shop_id }}" class="btn btn-secondary btn-sm">
+        🖨️ Printer Setup &amp; Guide
+      </a>
+      <button class="btn btn-secondary btn-sm" onclick="openQrModal()">
+        📱 Counter QR Code
+      </button>
+      <a href="/qr?shop={{ shop_id }}" target="_blank" class="btn btn-secondary btn-sm">
+        📄 Print Flyer
+      </a>
+      <a href="/logout" class="btn btn-danger btn-sm">
+        Sign Out ({{ admin_email }})
+      </a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Stats Row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Pending Orders</h3>
+          <div class="stat-value" id="stat-pending" style="color: var(--warning);">0</div>
+        </div>
+        <div class="stat-icon">⏳</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Completed Jobs</h3>
+          <div class="stat-value" id="stat-completed" style="color: var(--success);">0</div>
+        </div>
+        <div class="stat-icon">✅</div>
+      </div>
+
+      <div class="stat-card revenue-card">
+        <div class="stat-info">
+          <h3>Today's Revenue</h3>
+          <div class="revenue-val" id="stat-today-revenue">₹0</div>
+          <div style="font-size:.8rem; color:var(--text-muted); margin-top:.2rem;" id="stat-today-orders">0 orders today</div>
+        </div>
+        <div class="stat-icon">💰</div>
+      </div>
+
+      <div class="stat-card revenue-card">
+        <div class="stat-info">
+          <h3>Total Collected</h3>
+          <div class="revenue-val" id="stat-total-revenue">₹0</div>
+          <div style="font-size:.8rem; color:var(--text-muted); margin-top:.2rem;" id="stat-unpaid-hint">0 unpaid orders</div>
+        </div>
+        <div class="stat-icon">🏦</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h3>Connected Printer</h3>
+            <span id="printer-status-pill" style="font-size: 0.75rem; font-weight: 700; color: var(--success);">● ONLINE</span>
+          </div>
+          <div class="stat-value" style="font-size: 1.05rem; color: var(--accent); margin-bottom: 0.35rem;" id="active-printer-name">
+            {{ default_printer }}
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="triggerQuickTestPrint()">
+              🖨️ Test Print
+            </button>
+            <a href="/setup-guide?shop={{ shop_id }}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+              ⚙️ Setup Guide
+            </a>
+          </div>
+        </div>
+        <div class="stat-icon">🖨️</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Customer Portal</h3>
+          <div class="stat-value" style="font-size: 0.95rem; word-break: break-all;">
+            <a href="{{ upload_url }}" target="_blank" style="color: var(--accent); text-decoration: none;">
+              Open Upload Form ↗
+            </a>
+          </div>
+        </div>
+        <div class="stat-icon">📲</div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="section-header">
+      <h2 class="section-title">
+        <span>Incoming Customer Print Orders</span>
+        <span id="order-count-badge" class="badge badge-pending">0 New</span>
+      </h2>
+      <div style="display: flex; gap: 0.75rem;">
+        <select id="global-printer-select" class="form-select" style="width: auto; padding: 0.4rem 0.8rem;">
+          {% for p in printers %}
+          <option value="{{ p.name }}" {% if p.name == default_printer %}selected{% endif %}>
+            🖨️ {{ p.name }}
+          </option>
+          {% endfor %}
+          {% if not printers %}
+          <option value="">(Default System Printer)</option>
+          {% endif %}
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Document</th>
+            <th>Copies</th>
+            <th>Amount</th>
+            <th>Payment</th>
+            <th>Status</th>
+            <th>Received</th>
+            <th style="text-align: right;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="orders-tbody">
+          <tr>
+            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">
+              Loading orders...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- QR Code Modal -->
+  <div id="qr-modal" class="modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeQrModal()">&times;</button>
+      <h3 style="margin-bottom: 0.5rem; font-size: 1.4rem;">Customer Scan to Print</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+        Customers point their phone camera at this QR code to upload documents directly!
+      </p>
+      
+      <div style="background: #fff; padding: 1rem; border-radius: 12px; display: inline-block; margin-bottom: 1.25rem;">
+        <img src="/api/qr.png?shop={{ shop_id }}" alt="QR Code" style="width: 240px; height: 240px; display: block;">
+      </div>
+
+      <div style="background: var(--bg-primary); padding: 0.75rem; border-radius: 8px; font-family: monospace; font-size: 0.85rem; margin-bottom: 1.5rem;">
+        {{ upload_url }}
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <a href="/qr?shop={{ shop_id }}" target="_blank" class="btn btn-primary btn-sm">
+          🖨️ Open Printable Counter Flyer
+        </a>
+        <button class="btn btn-secondary btn-sm" onclick="closeQrModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Preview Modal -->
+  <div id="preview-modal" class="modal" onclick="handlePreviewBackdropClick(event)">
+    <div class="modal-content preview-modal-content">
+      <div class="preview-modal-header">
+        <div class="preview-title-wrap">
+          <h3 id="preview-doc-title"><span>📄</span> <span id="preview-filename">Document Preview</span></h3>
+          <div class="preview-chips" id="preview-chips-container">
+            <!-- Filled dynamically -->
+          </div>
+        </div>
+        <button class="modal-close" onclick="closePreviewModal()">&times;</button>
+      </div>
+
+      <div id="preview-body" class="preview-body">
+        <!-- Dynamically populated iframe/image/fallback -->
+      </div>
+
+      <!-- Print Options Bar (Page Range, Copies, Printer) -->
+      <div class="preview-controls-bar">
+        <div class="preview-control-item">
+          <label for="preview-page-range">📄 Page Range:</label>
+          <input type="text" id="preview-page-range" placeholder="e.g. 1-3, 5 (blank = All)">
+        </div>
+        <div class="preview-control-item">
+          <label for="preview-copies">📑 Copies:</label>
+          <input type="number" id="preview-copies" min="1" max="99" value="1">
+        </div>
+        <div class="preview-control-item" style="flex: 1; min-width: 170px;">
+          <label for="preview-printer-select">🖨️ Printer:</label>
+          <select id="preview-printer-select" class="form-select" style="padding: 0.3rem 0.6rem; font-size: 0.85rem; height: auto;">
+            {% for p in printers %}
+            <option value="{{ p.name }}" {% if p.name == default_printer %}selected{% endif %}>
+              {{ p.name }}
+            </option>
+            {% endfor %}
+            {% if not printers %}
+            <option value="">(Default System Printer)</option>
+            {% endif %}
+          </select>
+        </div>
+      </div>
+
+      <div class="preview-modal-footer">
+        <div style="font-size: 0.85rem; color: var(--text-muted);" id="preview-footer-note">
+          Ready to print with selected settings.
+        </div>
+        <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+          <a id="preview-download-link" href="#" target="_blank" class="btn btn-secondary btn-sm">
+            ⬇️ Download Original
+          </a>
+          <button id="preview-modal-print-btn" class="btn btn-success btn-sm" onclick="printFromPreview()">
+            🖨️ Print Now
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closePreviewModal()">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPI Payment Modal -->
+  <div id="payment-modal" class="modal" onclick="handlePaymentBackdropClick(event)">
+    <div class="modal-content" style="max-width: 440px; text-align: center;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🪙</span> Collect Payment
+        </h3>
+        <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+      </div>
+
+      <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.25rem; text-align: left; font-size: 0.85rem;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+          <span style="color: var(--text-muted);">Customer:</span>
+          <strong id="pay-modal-customer">—</strong>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-bottom: 0.35rem;">
+          <span style="color: var(--text-muted);">Order:</span>
+          <code id="pay-modal-order-id" style="color: var(--accent);">—</code>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <span style="color: var(--text-muted);">Bill Amount (₹):</span>
+          <input type="number" id="pay-modal-amount-input" step="0.5" min="0" style="width: 90px; text-align: right; padding: 2px 6px; font-weight: 700; background: var(--bg-card); border: 1px solid var(--border); color: #10b981; border-radius: 4px;" oninput="refreshModalUpiQr()">
+        </div>
+      </div>
+
+      <!-- UPI QR Code display -->
+      <div id="pay-modal-qr-container" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
+        <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #f8fafc;">
+          Scan with Any UPI App
+        </div>
+        <div style="background: #fff; padding: 8px; border-radius: 10px; display: inline-block; margin-bottom: 0.5rem;">
+          <img id="pay-modal-qr-img" src="" alt="UPI QR" style="width: 180px; height: 180px; display: block;">
+        </div>
+        <div id="pay-modal-vpa" style="font-family: monospace; font-size: 0.8rem; color: var(--accent);"></div>
+      </div>
+
+      <!-- Payment Reference / UTR input -->
+      <div style="margin-bottom: 1.25rem; text-align: left;">
+        <label for="pay-modal-ref" style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 0.3rem;">
+          UPI Ref / Transaction ID (Optional):
+        </label>
+        <input type="text" id="pay-modal-ref" class="form-input" placeholder="e.g. 423819283719" style="padding: 0.45rem 0.75rem; font-size: 0.85rem; width: 100%;">
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.6rem; justify-content: center; flex-wrap: wrap;">
+        <button class="btn btn-success" style="flex: 1; padding: 0.6rem;" onclick="confirmPaymentInModal('upi')">
+          ⚡ Paid via UPI
+        </button>
+        <button class="btn btn-secondary" style="flex: 1; padding: 0.6rem;" onclick="confirmPaymentInModal('cash')">
+          💵 Paid via Cash
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

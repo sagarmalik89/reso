@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Printer Setup & Installation Guide – {{ shop.shop_name }}</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    .setup-header {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+    }
+    .setup-container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .shop-meta-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    .step-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      position: relative;
+      box-shadow: var(--shadow);
+    }
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+    .step-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .step-desc {
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+    .instruction-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 0.4rem 1rem;
+      border-radius: 999px;
+    }
+    .status-online {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid var(--success);
+    }
+    .status-offline {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 1px solid var(--danger);
+    }
+    .pulse-green {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+      animation: pulse 1.8s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .hardware-diagram {
+      background: var(--bg-primary);
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      margin: 1.25rem 0;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <a href="/?shop={{ shop.shop_id }}" class="brand">
+      <span>🖨️ Printer Agent</span>
+      <span class="brand-badge">{{ shop.shop_name }}</span>
+    </a>
+    <div class="nav-actions">
+      <a href="/?shop={{ shop.shop_id }}" class="btn btn-secondary btn-sm">
+        📊 Go to Orders Dashboard
+      </a>
+      <a href="/qr?shop={{ shop.shop_id }}" target="_blank" class="btn btn-primary btn-sm">
+        📱 View Counter QR Flyer
+      </a>
+      <a href="/logout" class="btn btn-danger btn-sm">Sign Out</a>
+    </div>
+  </nav>
+
+  <!-- Setup Header -->
+  <header class="setup-header">
+    <div class="setup-container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: 1.85rem; font-weight: 800; margin-bottom: 0.5rem;">
+            🖨️ Physical Printer Setup & Installation Guide
+          </h1>
+          <p style="color: var(--text-muted); font-size: 1rem;">
+            Follow these 4 simple steps to connect your shop's printer and start printing customer orders directly!
+          </p>
+        </div>
+        <div id="live-status-container">
+          {% if shop.is_online() %}
+          <div class="status-pill status-online">
+            <span class="pulse-green"></span>
+            Printer Agent: Connected & Online
+          </div>
+          {% else %}
+          <div class="status-pill status-offline">
+            <span>⚪</span>
+            Printer Agent: Offline (Follow steps below)
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Shop Metadata Bar -->
+      <div class="shop-meta-card">
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Shop Counter ID</span>
+          <div style="font-family: monospace; font-size: 1.1rem; font-weight: 700; color: var(--accent);">{{ shop.shop_id }}</div>
+        </div>
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Active Printer</span>
+          <div style="font-size: 1rem; font-weight: 600;">{{ shop.printer_name or "System Default Printer" }}</div>
+        </div>
+        <div>
+          <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Shop Secret API Key</span>
+          <div style="font-family: monospace; font-size: 0.85rem; color: var(--text-secondary);">
+            {{ shop.api_key[:12] }}••••••••
+          </div>
+        </div>
+        <div>
+          <a href="/api/agent/download-launcher?shop={{ shop.shop_id }}" class="btn btn-primary btn-sm">
+            ⬇️ Download Launcher
+          </a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Step-by-Step Instructions -->
+  <main class="setup-container">
+    <div class="steps-list">
+
+      <!-- STEP 1: PHYSICAL HARDWARE CONNECTION -->
+      <div class="step-card">
+        <div class="step-badge">STEP 1</div>
+        <h2 class="step-title">🔌 Connect Your Physical Printer to Computer</h2>
+        <p class="step-desc">
+          Your printer must be connected to the Windows computer located at your shop or counter.
+        </p>
+
+        <div class="hardware-diagram">
+          <strong>[ Physical Printer (HP/Canon/Epson/Brother) ]</strong> 
+          &nbsp;&nbsp;──( USB Cable or Local Wi-Fi )──&nbsp;&nbsp; 
+          <strong>[ Shop Computer / Laptop ]</strong>
+        </div>
+
+        <ul style="color: var(--text-secondary); line-height: 1.8; margin-left: 1.5rem; font-size: 0.95rem;">
+          <li><strong>USB Connection</strong>: Plug the printer's USB cable into any USB port on your PC.</li>
+          <li><strong>Wi-Fi Connection</strong>: Ensure both your PC and the printer are connected to the same shop Wi-Fi network.</li>
+          <li><strong>Power & Paper</strong>: Turn on the printer and ensure the paper tray has A4 or required paper sheets.</li>
+          <li><strong>Quick Check</strong>: Open Windows <em>Printers & Scanners</em> and make sure your printer is showing as <strong>"Ready"</strong>.</li>
+        </ul>
+      </div>
+
+      <!-- STEP 2: INSTALL SHOP AGENT ON THE COMPUTER -->
+      <div class="step-card">
+        <div class="step-badge">STEP 2</div>
+        <h2 class="step-title">💻 Run the 1-Click Shop Agent on Your PC</h2>
+        <p class="step-desc">
+          The Shop Agent is a lightweight background service that receives incoming customer print jobs and feeds them to your connected printer.
+        </p>
+
+        <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; margin-bottom: 1.5rem;">
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--accent);">Option A: Download Ready-to-Run Launcher (Fastest)</h4>
+          <p style="margin: 0 0 1rem 0; font-size: 0.9rem; color: var(--text-muted);">
+            Click the button below to download your pre-configured batch launcher. Save it to your Desktop and double-click to run!
+          </p>
+          <a href="/api/agent/download-launcher?shop={{ shop.shop_id }}" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+            ⬇️ Download <code>start_{{ shop.shop_id }}_agent.bat</code>
+          </a>
+        </div>
+
+        <div style="background: var(--bg-primary); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem;">
+          <h4 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary);">Option B: If you already have this project folder on your PC</h4>
+          <p style="margin: 0 0 0.75rem 0; font-size: 0.9rem; color: var(--text-muted);">
+            Simply double-click <strong><code>run_shop_agent.bat</code></strong> inside this project folder, or run this command in terminal:
+          </p>
+          <div class="instruction-box">
+            <span>python -m printer_agent.shop_client --server "{{ server_url }}" --shop "{{ shop.shop_id }}" --key "{{ shop.api_key }}"</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3: TEST PRINT & VERIFY PAPER OUTPUT -->
+      <div class="step-card">
+        <div class="step-badge">STEP 3</div>
+        <h2 class="step-title">🧪 Print Hardware Test Page</h2>
+        <p class="step-desc">
+          Verify that ink, paper, and physical communication with your printer are working properly. Click the button below to send an instant test page.
+        </p>
+
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+          <button id="btn-test-print" class="btn btn-primary" onclick="triggerTestPrint('{{ shop.shop_id }}')">
+            🖨️ Send Test Print to Physical Printer
+          </button>
+          <span id="test-print-status" style="font-size: 0.9rem; color: var(--text-muted);"></span>
+        </div>
+      </div>
+
+      <!-- STEP 4: DISPLAY COUNTER QR FLYER -->
+      <div class="step-card">
+        <div class="step-badge">STEP 4</div>
+        <h2 class="step-title">📄 Print & Place Your Counter QR Flyer</h2>
+        <p class="step-desc">
+          Print the custom branded Counter Flyer with your shop's QR code. Place it on your shop desk or counter glass.
+        </p>
+
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-top: 1rem;">
+          <a href="/qr?shop={{ shop.shop_id }}" target="_blank" class="btn btn-primary">
+            🖨️ Open & Print Counter Flyer
+          </a>
+          <a href="/upload?shop={{ shop.shop_id }}" target="_blank" class="btn btn-secondary">
+            📱 Test Customer Upload Page
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Final CTA -->
+    <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(16, 185, 129, 0.15)); border: 1px solid var(--border); border-radius: 12px; padding: 2.5rem; text-align: center; margin-bottom: 3rem;">
+      <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Ready to Receive Customer Prints?</h3>
+      <p style="color: var(--text-muted); margin-bottom: 1.5rem;">
+        Open your operator dashboard to view real-time incoming orders, listen for audio chimes, and print in 1-click.
+      </p>
+      <a href="/?shop={{ shop.shop_id }}" class="btn btn-primary" style="padding: 0.85rem 2rem; font-size: 1.1rem;">
+        🚀 Go to Live Orders Dashboard
+      </a>
+    </div>
+  </main>
+
+  <script>
+    async function triggerTestPrint(shopId) {
+      const btn = document.getElementById('btn-test-print');
+      const statusEl = document.getElementById('test-print-status');
+      btn.disabled = true;
+      btn.innerText = '⏳ Sending to printer...';
+      statusEl.innerText = '';
+
+      try {
+        const res = await fetch(`/api/agent/test-print?shop=${encodeURIComponent(shopId)}`, {
+          method: 'POST'
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          statusEl.innerHTML = `<span style="color: var(--success); font-weight: 600;">✅ ${data.message} Check your printer!</span>`;
+        } else {
+          statusEl.innerHTML = `<span style="color: var(--danger); font-weight: 600;">❌ ${data.detail || 'Test print failed.'}</span>`;
+        }
+      } catch (err) {
+        statusEl.innerHTML = `<span style="color: var(--danger);">❌ Connection error: ${err.message}</span>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerText = '🖨️ Send Test Print to Physical Printer';
+      }
+    }
+
+    // Auto-refresh printer connection status every 5s
+    setInterval(async () => {
+      try {
+        const res = await fetch('/api/shops/{{ shop.shop_id }}/status');
+        if (res.ok) {
+          const shop = await res.json();
+          const container = document.getElementById('live-status-container');
+          if (container) {
+            if (shop.is_online) {
+              container.innerHTML = `
+                <div class="status-pill status-online">
+                  <span class="pulse-green"></span>
+                  Printer Agent: Connected & Online (${shop.printer_name || 'Default'})
+                </div>
+              `;
+            } else {
+              container.innerHTML = `
+                <div class="status-pill status-offline">
+                  <span>⚪</span>
+                  Printer Agent: Offline (Run launcher on your PC)
+                </div>
+              `;
+            }
+          }
+        }
+      } catch (e) {}
+    }, 5000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Master Admin – All Registered Shops</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <!-- Top Navigation -->
+  <nav class="navbar">
+    <a href="/admin/shops" class="brand">
+      <span>🖨️ Printer Agent</span>
+      <span class="brand-badge" style="background: var(--warning); color: #000;">SUPER ADMIN</span>
+    </a>
+    <div class="nav-actions">
+      <a href="/" class="btn btn-secondary btn-sm">
+        📊 Default Shop Dashboard
+      </a>
+      <a href="/signup" target="_blank" class="btn btn-primary btn-sm">
+        ➕ Register New Shop
+      </a>
+      <a href="/logout" class="btn btn-danger btn-sm">Sign Out</a>
+    </div>
+  </nav>
+
+  <div class="container" style="margin-top: 2rem;">
+    <!-- Stats Row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Total Registered Shops</h3>
+          <div class="stat-value" style="color: var(--accent);">{{ shops | length }}</div>
+        </div>
+        <div class="stat-icon">🏪</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Active Printers Online</h3>
+          <div class="stat-value" style="color: var(--success);">{{ online_count }}</div>
+        </div>
+        <div class="stat-icon">🖨️</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Total Print Orders</h3>
+          <div class="stat-value" style="color: var(--warning);">{{ total_orders }}</div>
+        </div>
+        <div class="stat-icon">📑</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-info">
+          <h3>Active Subscriptions</h3>
+          <div class="stat-value" style="color: var(--text-primary);">{{ shops | length }} Active</div>
+        </div>
+        <div class="stat-icon">⭐</div>
+      </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header" style="margin-top: 2rem;">
+      <h2 class="section-title">
+        <span>All Onboarded Shops & Counters</span>
+        <span class="badge badge-completed">{{ shops | length }} Shops</span>
+      </h2>
+      <div>
+        <a href="/signup" class="btn btn-primary btn-sm">➕ Add Shop</a>
+      </div>
+    </div>
+
+    <!-- Shops Table -->
+    <div class="table-card">
+      <table>
+        <thead>
+          <tr>
+            <th>Shop / Counter</th>
+            <th>Owner & Contact</th>
+            <th>Location</th>
+            <th>Printer & Live Status</th>
+            <th>Plan</th>
+            <th>Joined</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in shops %}
+          <tr>
+            <td>
+              <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">{{ s.shop_name }}</div>
+              <div style="font-family: monospace; font-size: 0.8rem; color: var(--accent);">ID: {{ s.shop_id }}</div>
+            </td>
+            <td>
+              <div style="font-weight: 600;">{{ s.owner_name }}</div>
+              <div style="font-size: 0.85rem; color: var(--text-muted);">📞 {{ s.phone }}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">✉️ {{ s.email }}</div>
+            </td>
+            <td>
+              <span style="font-size: 0.9rem;">{{ s.city or "—" }}</span>
+            </td>
+            <td>
+              {% if s.is_online() %}
+              <span class="badge badge-completed" style="display: inline-flex; align-items: center; gap: 0.35rem;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #fff;"></span>
+                Online: {{ s.printer_name or "Default" }}
+              </span>
+              {% else %}
+              <span class="badge" style="background: rgba(148, 163, 184, 0.2); color: var(--text-muted);">
+                Offline
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge badge-printing" style="text-transform: uppercase;">{{ s.subscription_plan }}</span>
+            </td>
+            <td style="font-size: 0.85rem; color: var(--text-muted);">
+              {{ s.created_at | int }}
+            </td>
+            <td style="text-align: right;">
+              <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <a href="/?shop={{ s.shop_id }}" class="btn btn-primary btn-sm" title="Open Shop Dashboard">
+                  📊 Dashboard
+                </a>
+                <a href="/setup-guide?shop={{ s.shop_id }}" class="btn btn-secondary btn-sm" title="Printer Setup">
+                  🖨️ Setup
+                </a>
+                <a href="/qr?shop={{ s.shop_id }}" target="_blank" class="btn btn-secondary btn-sm" title="View Flyer">
+                  📱 QR
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</body>
+</html>

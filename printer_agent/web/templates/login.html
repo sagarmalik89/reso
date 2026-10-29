@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login – Printer Agent Portal</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .login-card {
+      background-color: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .login-logo {
+      font-size: 3rem;
+      margin-bottom: 0.5rem;
+    }
+    .login-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .login-subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    .error-banner {
+      background-color: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">🖨️</div>
+      <h1 class="login-title">Printer Agent Portal</h1>
+      <p class="login-subtitle">Sign in to manage print jobs & orders</p>
+
+      {% if error %}
+      <div class="error-banner">
+        ⚠️ {{ error }}
+      </div>
+      {% endif %}
+
+      <form action="/login" method="POST">
+        <div class="form-group">
+          <label class="form-label" for="email">Shopkeeper or Admin Email</label>
+          <input class="form-input" type="email" id="email" name="email" placeholder="your-shop@example.com" required autofocus>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input class="form-input" type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; padding: 0.8rem;">
+          Sign In to Dashboard
+        </button>
+      </form>
+
+      <div style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--border);">
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+          Want to connect your shop printer?
+        </p>
+        <a href="/signup" class="btn btn-secondary" style="width: 100%; padding: 0.7rem; font-size: 0.9rem;">
+          🏪 Register New Shop (14-Day Free Trial)
+        </a>
+      </div>
+
+      <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted);">
+        Master Admin: <code>admin@printagent.com</code> (pass: <code>admin123</code>)
+      </div>
+    </div>
+  </div>
+</body>
+</html>
