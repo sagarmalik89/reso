@@ -29,6 +29,7 @@ try:
 except ImportError:
     import urllib.request as _url_request
     import urllib.parse as _url_parse
+    import urllib.error as _url_error
     import json as _json
 
     class SimpleRequests:
@@ -38,9 +39,12 @@ except ImportError:
                 query = _url_parse.urlencode(params)
                 url = f"{url}?{query}"
             req = _url_request.Request(url, headers=headers or {})
-            with _url_request.urlopen(req, timeout=timeout) as resp:
-                data = resp.read()
-                return SimpleResponse(resp.getcode(), data)
+            try:
+                with _url_request.urlopen(req, timeout=timeout) as resp:
+                    data = resp.read()
+                    return SimpleResponse(resp.getcode(), data)
+            except _url_error.HTTPError as exc:
+                return SimpleResponse(exc.code, exc.read())
 
         @staticmethod
         def post(url, data=None, json=None, headers=None, timeout=10):
@@ -53,9 +57,12 @@ except ImportError:
                 body = _url_parse.urlencode(data).encode("utf-8")
                 headers["Content-Type"] = "application/x-www-form-urlencoded"
             req = _url_request.Request(url, data=body, headers=headers, method="POST")
-            with _url_request.urlopen(req, timeout=timeout) as resp:
-                data = resp.read()
-                return SimpleResponse(resp.getcode(), data)
+            try:
+                with _url_request.urlopen(req, timeout=timeout) as resp:
+                    data = resp.read()
+                    return SimpleResponse(resp.getcode(), data)
+            except _url_error.HTTPError as exc:
+                return SimpleResponse(exc.code, exc.read())
 
     class SimpleResponse:
         def __init__(self, status_code, content):
