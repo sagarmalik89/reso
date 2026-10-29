@@ -22,3 +22,14 @@ orders.db
 .vscode/
 .idea/
 *.swp
+
+# Secrets — never commit!
+.env
+nginx/ssl/
+
+# Docker build artifacts
+release/
+assets/printer_agent.ico
+
+# PyInstaller
+*.spec

@@ -1,0 +1,83 @@
+# ============================================================
+# Printer Agent - Docker Compose (Production SaaS Deployment)
+# ============================================================
+# Services:
+#   web       — FastAPI Web Portal + Operator Dashboard (port 8000)
+#   nginx     — Reverse proxy with SSL termination (ports 80, 443)
+#
+# Usage:
+#   docker compose up -d                    # Start all services
+#   docker compose logs -f web             # Stream application logs
+#   docker compose down                    # Stop all services
+#   docker compose pull && docker compose up -d  # Update to latest
+# ============================================================
+
+services:
+
+  # ── Printer Agent Web Portal ─────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: printer_agent_web
+    restart: unless-stopped
+    environment:
+      # ── Core Auth (CHANGE THESE IN PRODUCTION) ───────────
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@printagent.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      SECRET_KEY: ${SECRET_KEY:-please-change-this-secret-key-in-production}
+      # ── Web Server ────────────────────────────────────────
+      WEB_HOST: "0.0.0.0"
+      WEB_PORT: "8000"
+      # ── Pricing (₹ INR) ──────────────────────────────────
+      PRICE_PER_PAGE_BW: ${PRICE_PER_PAGE_BW:-5}
+      PRICE_PER_PAGE_COLOR: ${PRICE_PER_PAGE_COLOR:-10}
+      SHOP_SUBSCRIPTION_MONTH: ${SHOP_SUBSCRIPTION_MONTH:-50}
+      # ── Default UPI Payment Details ───────────────────────
+      UPI_DEFAULT_VPA: ${UPI_DEFAULT_VPA:-malikprint@upi}
+      UPI_MERCHANT_NAME: ${UPI_MERCHANT_NAME:-Printer Agent}
+    volumes:
+      # Persist SQLite database, uploaded files, and logs
+      - printer_data:/app/uploads
+      - printer_db:/app/orders.db
+      - printer_logs:/app/logs
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/login', timeout=8)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: printer_agent_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro          # Mount your SSL certs here
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 60s
+      timeout: 5s
+      retries: 2
+
+# ── Named Volumes ─────────────────────────────────────────
+volumes:
+  printer_data:
+    driver: local
+  printer_db:
+    driver: local
+  printer_logs:
+    driver: local
+  nginx_cache:
+    driver: local

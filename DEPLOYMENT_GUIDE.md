@@ -148,3 +148,69 @@ All automated tests are pre-configured. To verify anytime:
 python -m pytest -v
 ```
 All 21 unit tests (print engine, queue management, multi-shop registration, hardware test printing, order store, and QR generation) pass with 100% success.
+
+---
+
+### ☁️ Cloud / VPS Deployment (Docker)
+
+Run the portal on any cloud VPS (DigitalOcean, AWS EC2, Azure, Hetzner, etc.) accessible from anywhere via the internet:
+
+#### Option A: One-Command Deploy (Ubuntu / Debian VPS)
+```bash
+git clone https://github.com/yourrepo/printer-agent.git
+cd printer-agent
+chmod +x deploy.sh
+
+# HTTP only (testing):
+./deploy.sh --no-ssl
+
+# With HTTPS (production, requires domain pointing to this server):
+./deploy.sh --domain prints.yourdomain.com
+```
+
+The script automatically:
+- Installs Docker if missing
+- Generates a strong `SECRET_KEY`
+- Issues a free Let's Encrypt SSL certificate
+- Starts the web portal + Nginx reverse proxy
+- Sets up auto-renewal cron
+
+#### Option B: Manual Docker Compose
+```bash
+cp .env.example .env
+# Edit .env with your ADMIN_PASSWORD and UPI_DEFAULT_VPA
+
+docker compose build
+docker compose up -d
+
+# Logs
+docker compose logs -f web
+
+# Update to latest
+git pull
+docker compose build --no-cache
+docker compose up -d
+```
+
+#### Useful Docker Commands
+```bash
+docker compose ps                  # Check service status
+docker compose restart web         # Restart web app
+docker compose exec web python main.py status  # Check queue
+docker compose down -v             # Stop & remove (keeps volumes)
+```
+
+#### Environment Variables Reference (`.env`)
+
+| Variable | Default | Description |
+|---|---|---|
+| `ADMIN_EMAIL` | `admin@printagent.com` | Admin login email |
+| `ADMIN_PASSWORD` | `admin123` | Admin login password |
+| `SECRET_KEY` | auto-generated | Session signing key |
+| `WEB_PORT` | `8000` | Port for the web portal |
+| `PRICE_PER_PAGE_BW` | `5` | ₹ per page Black & White |
+| `PRICE_PER_PAGE_COLOR` | `10` | ₹ per page Color |
+| `UPI_DEFAULT_VPA` | `malikprint@upi` | Platform UPI VPA (fallback) |
+| `UPI_MERCHANT_NAME` | `Printer Agent` | UPI merchant display name |
+
+> **Security Tip**: Always change `ADMIN_PASSWORD` and `SECRET_KEY` before running in production.
