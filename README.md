@@ -1,7 +1,9 @@
 # 🖨 Printer Agent
 
+
+![CI](https://github.com/sagarmalik89/reso/actions/workflows/ci.yml/badge.svg)
+
 Fully automatic **Python-based Print Job Manager** for Windows.  
-Drop a file → it prints. Set a schedule → it prints. Call the CLI → it prints.
 
 ---
 
